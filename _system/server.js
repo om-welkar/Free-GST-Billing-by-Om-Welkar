@@ -55,11 +55,17 @@ const app = express();
 // also localhost.
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allow =
-    !origin ||
+  const isVercelOrigin = origin && (
+    origin.endsWith('.vercel.app') ||
+    origin.includes('vercel.app')
+  );
+  const isLocalOrigin = origin && (
     /^https?:\/\/localhost(:\d+)?$/i.test(origin) ||
     /^https?:\/\/127\.0\.0\.1(:\d+)?$/i.test(origin) ||
-    /^https?:\/\/\[::1\](:\d+)?$/i.test(origin);
+    /^https?:\/\/\[::1\](:\d+)?$/i.test(origin)
+  );
+
+  const allow = !origin || isVercel || isVercelOrigin || isLocalOrigin;
   if (!allow) {
     return res.status(403).json({ error: 'Cross-origin request refused' });
   }
@@ -67,10 +73,15 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
   if (req.method === 'OPTIONS') return res.status(204).end();
   next();
+});
+
+app.all('/api/index.js', (req, res) => {
+  res.json({ status: 'ok', message: 'API ready' });
 });
 
 // v1.10.0 — Body size lowered from 50mb → 5mb. Legit invoice payloads
@@ -324,7 +335,7 @@ app.delete('/api/bills/:id', (req, res) => {
 // ========================
 const PROFILE_PATH = path.join(DATA_DIR, 'profile.json');
 const DEFAULT_PROFILE = {
-  businessName: '', address: '', state: '', gstin: '', pan: '',
+  businessName: 'OM WELKAR', address: '', state: '', gstin: '', pan: '',
   email: '', phone: '', bankName: '', accountNumber: '', ifsc: '',
   logo: '', signature: '', upiId: '', googleClientId: '', googleDriveFolder: 'GST Billing Invoices',
 };
