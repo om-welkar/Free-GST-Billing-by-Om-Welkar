@@ -1,0 +1,38 @@
+# Node dependencies
+node_modules/
+_system/node_modules/
+_system/node/
+
+# User data, backups & generated PDFs
+_system/data/bills/*
+!_system/data/bills/.gitkeep
+_system/data/clients/*
+!_system/data/clients/.gitkeep
+_system/data/expenses/*
+!_system/data/expenses/.gitkeep
+_system/data/products/*
+!_system/data/products/.gitkeep
+_system/data/profiles/*
+!_system/data/profiles/.gitkeep
+_system/data/purchases/*
+!_system/data/purchases/.gitkeep
+_system/data/receipts/*
+!_system/data/receipts/.gitkeep
+_system/data/recurring/*
+!_system/data/recurring/.gitkeep
+_system/data/trash/*
+!_system/data/trash/.gitkeep
+_system/data/backups/
+_system/data/profile.json
+_system/data/local-prefs.json
+_system/data/meta.json
+_system/data/errors.log
+_system/Saved Invoices/
+_system/Trash/
+
+# OS and Log files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+desktop.ini
