@@ -15,7 +15,8 @@ import { fileURLToPath } from 'url';
 import { templateTotals, clientYearToDate, nextCounterValue, startFor, numberSeriesFor, counterKeyFor, formatDocNumber, businessKeyOf, getFinancialYearLabel, INVOICE_TYPES } from './src/utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, 'data');
+const isVercel = !!process.env.VERCEL;
+const DATA_DIR = isVercel ? path.join('/tmp', 'data') : path.join(__dirname, 'data');
 
 // Port choice — we deliberately default to a high, unusual number rather than
 // the conventional 3001. The 3000-range is heavily used by every other Node /
@@ -27,7 +28,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 // wins over this default — so a single user who genuinely needs 47371 for
 // something else can edit that file and we'll respect it forever.
 const DEFAULT_PORT = 47371;
-const PORT_FILE = path.join(__dirname, 'data', 'port.txt');
+const PORT_FILE = path.join(DATA_DIR, 'port.txt');
 
 // Read the persisted port (if any) — written once on first successful start
 // and every time we get bumped off our preferred port by EADDRINUSE.
@@ -816,7 +817,7 @@ app.post('/api/import', (req, res) => {
 // ========================
 // Save PDF to local folder
 // ========================
-const INVOICES_DIR = path.join(__dirname, 'Saved Invoices');
+const INVOICES_DIR = isVercel ? path.join('/tmp', 'Saved Invoices') : path.join(__dirname, 'Saved Invoices');
 if (!fs.existsSync(INVOICES_DIR)) fs.mkdirSync(INVOICES_DIR, { recursive: true });
 
 app.post('/api/save-pdf', express.raw({ type: 'application/pdf', limit: '20mb' }), (req, res) => {
@@ -2106,13 +2107,10 @@ app.post('/api/recurring/:id/generate', (req, res) => {
   }
 });
 
-startServer(STARTING_PORT);
-// Fire once after a short delay so the listener is up first; then once a day
-// for users whose server stays up >24h.
-// v1.10.6 — audit L19: async caller. Uncaught rejections logged via
-// the top-level unhandledRejection handler installed above.
-setTimeout(() => { processDueRecurring().catch(err => logFatal(err, 'recurring')); }, 3000);
-// Hourly: a template only fires once its nextDate has come, so checking more
-// often never makes extra invoices - it just stops a template due today from
-// waiting until the same time tomorrow on a PC that stays on.
-setInterval(() => { processDueRecurring().catch(err => logFatal(err, 'recurring')); }, 60 * 60 * 1000);
+if (!isVercel) {
+  startServer(STARTING_PORT);
+  setTimeout(() => { processDueRecurring().catch(err => logFatal(err, 'recurring')); }, 3000);
+  setInterval(() => { processDueRecurring().catch(err => logFatal(err, 'recurring')); }, 60 * 60 * 1000);
+}
+
+export default app;
