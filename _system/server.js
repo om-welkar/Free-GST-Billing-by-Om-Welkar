@@ -80,9 +80,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.all('/api/index.js', (req, res) => {
-  res.json({ status: 'ok', message: 'API ready' });
-});
+
 
 // v1.10.0 — Body size lowered from 50mb → 5mb. Legit invoice payloads
 // are single-digit kilobytes; a full import archive with 5000 bills fits
@@ -94,7 +92,7 @@ const LOCAL_PREFS_ROUTE = '/api/local-prefs';
 // profile, logo and signature images included, so a few hundred invoices
 // with a logo passed 5mb and Restore failed with "Request body too large".
 const IMPORT_ROUTE = '/api/import';
-const jsonBody = express.json({ limit: '5mb' });
+const jsonBody = express.json({ limit: '50mb' });
 const importBody = express.json({ limit: '500mb' });
 app.use((req, res, next) => {
   if (req.path === LOCAL_PREFS_ROUTE) return next();
@@ -172,6 +170,8 @@ function errRes(res, status, code, err) {
 // invoice counter — a truncated meta.json read back as `{}` reissues
 // invoice numbers from zero.
 function writeFileAtomic(filePath, contents) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   const tmp = filePath + '.tmp';
   fs.writeFileSync(tmp, contents, 'utf-8');
   fs.renameSync(tmp, filePath);
